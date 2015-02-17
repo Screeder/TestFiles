@@ -1,6 +1,3 @@
-# TestFiles
-TestFiles
-
 private static void Drawing_OnEndScene(EventArgs args)
 {
 	if (Device == null || Device.IsDisposed)
@@ -22,6 +19,303 @@ private static void Drawing_OnEndScene(EventArgs args)
 		}
 	}
 	SpriteManager.OnEndScene();
+}
+
+public class TextManager
+{
+	private static List<Text> _texts = new List<Text>();
+	private static readonly SharpDX.Direct3D9.Sprite _sprite = new SharpDX.Direct3D9.Sprite(Device);
+	
+	public void Add(Text text)
+	{
+		_texts.Add(text);
+	}
+	
+	private void Clear()
+	{
+		_texts.RemoveAll();
+	}
+	
+	public void OnEndScene()
+	{
+		try
+		{
+			if (_sprite.IsDisposed)
+			{
+				return;
+			}
+			
+			_sprite.Begin(SpriteFlags.SortTexture | SpriteFlags.SortDepthBackToFront | SpriteFlags.DoNotAddRefTexture);
+			var matrix = _sprite.Transform;
+			foreach (Text text in _texts)
+			{
+				if (text.IsDisposed() || text.text == "")
+				{
+					return;
+				}
+
+				if (text.Unit != null && text.Unit.IsValid)
+				{
+					var pos = text.Unit.HPBarPosition + Offset;
+					X = (int) pos.X;
+					Y = (int) pos.Y;
+				}
+
+				var xP = text.X;
+				var yP = text.Y;
+				
+				var nMatrix = Matrix.Translation(xP, yP, sprite.Layer);
+				_sprite.Transform = nMatrix;
+				if (text.OutLined)
+				{
+					var outlineColor = new ColorBGRA(0, 0, 0, 255);
+					_textFont.DrawText(_sprite, text.text, xP - 1, yP - 1, outlineColor);
+					_textFont.DrawText(_sprite, text.text, xP + 1, yP + 1, outlineColor);
+					_textFont.DrawText(_sprite, text.text, xP - 1, yP, outlineColor);
+					_textFont.DrawText(_sprite, text.text, xP + 1, yP, outlineColor);
+				}
+				_textFont.DrawText(_sprite, text.text, xP, yP, Color);
+			}
+			_sprite.Transform = matrix;
+			_sprite.End();
+			Clear();
+		}
+		catch (Exception e)
+		{
+			Reset();
+			Console.WriteLine(@"Common.Render.TextManager.OnEndScene: " + e);
+		}
+	}
+}
+
+public class Text : RenderObject
+{
+	public delegate Vector2 PositionDelegate();
+
+	public delegate string TextDelegate();
+
+	private string _text;
+	private Font _textFont;
+	private int _x;
+	private int _y;
+	public bool Centered = false;
+	public Vector2 Offset;
+	public bool OutLined = false;
+	public PositionDelegate PositionUpdate;
+	public TextDelegate TextUpdate;
+	public Obj_AI_Base Unit;
+
+	public Text(string text, int x, int y, int size, ColorBGRA color, string fontName = "Calibri")
+	{
+		Color = color;
+		this.text = text;
+
+		_x = x;
+		_y = y;
+
+		_textFont = new Font(
+			Device,
+			new FontDescription
+			{
+				FaceName = fontName,
+				Height = size,
+				OutputPrecision = FontPrecision.Default,
+				Quality = FontQuality.Default
+			});
+	}
+
+	public Text(string text, Vector2 position, int size, ColorBGRA color, string fontName = "Calibri")
+	{
+		Color = color;
+		this.text = text;
+
+		_x = (int) position.X;
+		_y = (int) position.Y;
+
+		_textFont = new Font(
+			Device,
+			new FontDescription
+			{
+				FaceName = fontName,
+				Height = size,
+				OutputPrecision = FontPrecision.Default,
+				Quality = FontQuality.Default
+			});
+	}
+
+	public Text(string text,
+		Obj_AI_Base unit,
+		Vector2 offset,
+		int size,
+		ColorBGRA color,
+		string fontName = "Calibri")
+	{
+		Unit = unit;
+		Color = color;
+		this.text = text;
+		Offset = offset;
+
+		var pos = unit.HPBarPosition + offset;
+
+		_x = (int) pos.X;
+		_y = (int) pos.Y;
+
+		_textFont = new Font(
+			Device,
+			new FontDescription
+			{
+				FaceName = fontName,
+				Height = size,
+				OutputPrecision = FontPrecision.Default,
+				Quality = FontQuality.Default
+			});
+	}
+
+	public Text(int x, int y, string text, int size, ColorBGRA color, string fontName = "Calibri")
+	{
+		Color = color;
+		this.text = text;
+
+		_x = x;
+		_y = y;
+
+		_textFont = new Font(
+			Device,
+			new FontDescription
+			{
+				FaceName = fontName,
+				Height = size,
+				OutputPrecision = FontPrecision.Default,
+				Quality = FontQuality.Default
+			});
+	}
+
+	public Text(Vector2 position, string text, int size, ColorBGRA color, string fontName = "Calibri")
+	{
+		Color = color;
+		this.text = text;
+		_x = (int) position.X;
+		_y = (int) position.Y;
+		_textFont = new Font(
+			Device,
+			new FontDescription
+			{
+				FaceName = fontName,
+				Height = size,
+				OutputPrecision = FontPrecision.Default,
+				Quality = FontQuality.Default
+			});
+	}
+
+	public FontDescription TextFontDescription
+	{
+		get { return _textFont.Description; }
+
+		set
+		{
+			_textFont.Dispose();
+			_textFont = new Font(Device, value);
+		}
+	}
+
+	public int X
+	{
+		get
+		{
+			var dx = Centered ? -_textFont.MeasureText(null, text, FontDrawFlags.Center).Width / 2 : 0;
+
+			if (PositionUpdate != null)
+			{
+				return (int) PositionUpdate().X + dx;
+			}
+
+			return _x + dx;
+		}
+		set { _x = value; }
+	}
+
+	public int Y
+	{
+		get
+		{
+			var dy = Centered ? -_textFont.MeasureText(null, text, FontDrawFlags.Center).Height / 2 : 0;
+
+			if (PositionUpdate != null)
+			{
+				return (int) PositionUpdate().Y + dy;
+			}
+			return _y + dy;
+		}
+		set { _y = value; }
+	}
+
+	public int Width { get; set; }
+	public ColorBGRA Color { get; set; }
+
+	public string text
+	{
+		get
+		{
+			if (TextUpdate != null)
+			{
+				return TextUpdate();
+			}
+			return _text;
+		}
+		set { _text = value; }
+	}
+
+	public override void OnEndScene()
+	{
+		try
+		{
+			if (_textFont.IsDisposed || text == "")
+			{
+				return;
+			}
+
+			if (Unit != null && Unit.IsValid)
+			{
+				var pos = Unit.HPBarPosition + Offset;
+				X = (int) pos.X;
+				Y = (int) pos.Y;
+			}
+
+			var xP = X;
+			var yP = Y;
+			if (OutLined)
+			{
+				var outlineColor = new ColorBGRA(0, 0, 0, 255);
+				_textFont.DrawText(null, text, xP - 1, yP - 1, outlineColor);
+				_textFont.DrawText(null, text, xP + 1, yP + 1, outlineColor);
+				_textFont.DrawText(null, text, xP - 1, yP, outlineColor);
+				_textFont.DrawText(null, text, xP + 1, yP, outlineColor);
+			}
+			_textFont.DrawText(null, text, xP, yP, Color);
+		}
+		catch (Exception e)
+		{
+			Console.WriteLine(@"Common.Render.Text.OnEndScene: " + e);
+		}
+	}
+
+	public override void OnPreReset()
+	{
+		_textFont.OnLostDevice();
+	}
+
+	public override void OnPostReset()
+	{
+		_textFont.OnResetDevice();
+	}
+
+	public override void Dispose()
+	{
+		if (!_textFont.IsDisposed)
+		{
+			_textFont.Dispose();
+		}
+	}
 }
 
 public class SpriteManager
@@ -49,6 +343,7 @@ public class SpriteManager
 			}
 			
 			_sprite.Begin(SpriteFlags.SortTexture | SpriteFlags.SortDepthBackToFront | SpriteFlags.DoNotAddRefTexture);
+			var matrix = _sprite.Transform;
 			foreach (Sprite sprite in _sprites)
 			{
 				if (sprite._texture.IsDisposed || !sprite.Position.IsValid() || sprite.VisibleState())
@@ -56,14 +351,12 @@ public class SpriteManager
 					return;
 				}
 
-				var matrix = _sprite.Transform;
 				var nMatrix = (Matrix.Scaling(Scale.X, Scale.Y, 0)) * Matrix.RotationZ(Rotation) *
 							  Matrix.Translation(Position.X, Position.Y, sprite.Layer);
 				_sprite.Transform = nMatrix;
 				_sprite.Draw(_texture, _color, _crop);
-				_sprite.Transform = matrix;
-				
 			}
+			_sprite.Transform = matrix;
 			_sprite.End();
 			Clear();
 		}
