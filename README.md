@@ -13,6 +13,10 @@ private static void Drawing_OnEndScene(EventArgs args)
 		{
 			SpriteManager.Add(renderObject);
 		}
+		else if (renderObject is Text)
+		{
+			TextManager.Add(renderObject);
+		}
 		else
 		{
 			renderObject.OnEndScene();
@@ -122,6 +126,7 @@ public class Text : RenderObject
 				OutputPrecision = FontPrecision.Default,
 				Quality = FontQuality.Default
 			});
+		_textFont.PreloadText(text);
 	}
 
 	public Text(string text, Vector2 position, int size, ColorBGRA color, string fontName = "Calibri")
@@ -141,6 +146,7 @@ public class Text : RenderObject
 				OutputPrecision = FontPrecision.Default,
 				Quality = FontQuality.Default
 			});
+		_textFont.PreloadText(text);
 	}
 
 	public Text(string text,
@@ -169,6 +175,7 @@ public class Text : RenderObject
 				OutputPrecision = FontPrecision.Default,
 				Quality = FontQuality.Default
 			});
+		_textFont.PreloadText(text);
 	}
 
 	public Text(int x, int y, string text, int size, ColorBGRA color, string fontName = "Calibri")
@@ -188,6 +195,7 @@ public class Text : RenderObject
 				OutputPrecision = FontPrecision.Default,
 				Quality = FontQuality.Default
 			});
+		_textFont.PreloadText(text);
 	}
 
 	public Text(Vector2 position, string text, int size, ColorBGRA color, string fontName = "Calibri")
@@ -205,6 +213,7 @@ public class Text : RenderObject
 				OutputPrecision = FontPrecision.Default,
 				Quality = FontQuality.Default
 			});
+		_textFont.PreloadText(text);
 	}
 
 	public FontDescription TextFontDescription
