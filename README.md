@@ -69,12 +69,12 @@ public class TextManager
 				if (text.OutLined)
 				{
 					var outlineColor = new ColorBGRA(0, 0, 0, 255);
-					_textFont.DrawText(_sprite, text.text, xP - 1, yP - 1, outlineColor);
-					_textFont.DrawText(_sprite, text.text, xP + 1, yP + 1, outlineColor);
-					_textFont.DrawText(_sprite, text.text, xP - 1, yP, outlineColor);
-					_textFont.DrawText(_sprite, text.text, xP + 1, yP, outlineColor);
+					_textFont.DrawText(_sprite, text.text, xP - 1, yP - 1, null, DT_NOCLIP, outlineColor);
+					_textFont.DrawText(_sprite, text.text, xP + 1, yP + 1, null, DT_NOCLIP, outlineColor);
+					_textFont.DrawText(_sprite, text.text, xP - 1, yP, null, DT_NOCLIP, outlineColor);
+					_textFont.DrawText(_sprite, text.text, xP + 1, yP, null, DT_NOCLIP, outlineColor);
 				}
-				_textFont.DrawText(_sprite, text.text, xP, yP, Color);
+				_textFont.DrawText(_sprite, text.text, xP, yP, null, DT_NOCLIP, Color);
 			}
 			_sprite.Transform = matrix;
 			_sprite.End();
